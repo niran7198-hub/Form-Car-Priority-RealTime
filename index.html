@@ -1,0 +1,1222 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบบันทึกข้อมูลรถยนต์ (Manage Edition)</title>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-purple: #8b5cf6; --primary-purple2: #6d28d9; --dark-purple: #4c1d95;
+            --accent-pink: #ec4899; --accent-cyan: #06b6d4; --accent-orange: #fb923c;
+            --gray-base: #475569; --bg-body: #f5f3ff; --danger: #ef4444; --success: #16a34a;
+            --warning: #f59e0b; --info: #0ea5e9;
+        }
+        body {
+            font-family: 'Sarabun', sans-serif; margin: 0; padding: 14px; color: #1e293b;
+            background: linear-gradient(160deg,#f5f3ff 0%,#eef2ff 35%,#fdf4ff 70%,#f0fdfa 100%);
+            background-attachment: fixed; min-height: 100vh;
+        }
+        .container { max-width: 1250px; margin: auto; }
+        .header {
+            background: linear-gradient(120deg,#7c3aed 0%,#a855f7 45%,#ec4899 100%);
+            color: white; padding: 28px 25px; border-radius: 20px; margin-bottom: 16px; text-align: center;
+            box-shadow: 0 14px 38px -10px rgba(124,58,237,.55), inset 0 1px 0 rgba(255,255,255,.25);
+            position: relative; overflow: hidden;
+        }
+        .header::before {
+            content:''; position:absolute; top:-60px; right:-60px; width:220px; height:220px;
+            border-radius:50%; background: radial-gradient(circle, rgba(255,255,255,.18), transparent 70%);
+            pointer-events:none;
+        }
+        .header::after {
+            content:''; position:absolute; bottom:-70px; left:-40px; width:180px; height:180px;
+            border-radius:50%; background: radial-gradient(circle, rgba(255,255,255,.12), transparent 70%);
+            pointer-events:none;
+        }
+        .header h2, .header p, .header #connStatus { position:relative; z-index:1; }
+        .form-toggle-bar {
+            background: linear-gradient(120deg,#fff 0%,#fdf4ff 100%); padding: 16px 22px; border-radius: 14px;
+            cursor: pointer; display: flex; justify-content: space-between; align-items: center;
+            border-left: 6px solid var(--accent-pink); margin-bottom: 12px; font-weight: bold;
+            box-shadow: 0 4px 14px -4px rgba(124,58,237,.18); transition: transform .15s, box-shadow .15s;
+        }
+        .form-toggle-bar:hover { transform: translateY(-1px); box-shadow: 0 8px 20px -6px rgba(124,58,237,.28); }
+        .card-form {
+            background: linear-gradient(165deg,#ffffff 0%,#fdfaff 100%); padding: 22px; border-radius: 20px;
+            box-shadow: 0 14px 34px -12px rgba(124,58,237,.18); margin-bottom: 20px;
+            border: 1px solid #ede9fe;
+        }
+        .grid-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; }
+        .input-group label {
+            font-size: 0.85rem; font-weight: 700; color: var(--dark-purple); margin-bottom: 6px;
+            display: flex; align-items: center; justify-content: space-between; gap: 6px;
+        }
+        .btn-now {
+            background: linear-gradient(120deg,#ede9fe,#fce7f3); border: 1px solid var(--primary-purple);
+            color: var(--primary-purple2); font-size: 0.7rem; font-weight: 800; padding: 5px 10px;
+            border-radius: 10px; cursor: pointer; flex-shrink: 0; transition: .15s;
+            position: relative;
+        }
+        /* ขยายพื้นที่แตะ (touch target) ให้ถึงเกณฑ์ 44px โดยไม่เปลี่ยนขนาดที่มองเห็น — กันกดพลาดบนมือถือ */
+        .btn-now::before {
+            content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
+            width: 44px; height: 44px;
+        }
+        .btn-now:hover { background: linear-gradient(120deg,var(--primary-purple2),#db2777); color: white; transform: scale(1.05); }
+        .btn-now:focus-visible { outline: 2px solid var(--primary-purple2); outline-offset: 2px; }
+        input, select {
+            width: 100%; padding: 12px 13px; border-radius: 10px; border: 1.5px solid #e2d9fb;
+            font-size: 16px; background: #fff; box-sizing: border-box; color:#1e293b;
+            transition: border-color .15s, box-shadow .15s;
+        }
+        input:focus, select:focus {
+            outline: none; border-color: var(--primary-purple);
+            box-shadow: 0 0 0 4px rgba(139,92,246,.15);
+        }
+        .form-actions { margin-top: 22px; display: flex; flex-wrap: wrap; gap: 10px; }
+        .btn {
+            flex: 1; min-width: 140px; padding: 13px; border-radius: 10px; font-weight: 800; cursor: pointer;
+            border: none; font-size: 0.9rem; display: flex; align-items: center; justify-content: center;
+            gap: 5px; transition: transform .15s, box-shadow .15s; color: white;
+        }
+        .btn:hover { transform: translateY(-2px); }
+        .btn-save {
+            background: linear-gradient(120deg,var(--primary-purple2),#db2777);
+            box-shadow: 0 8px 20px -6px rgba(139,92,246,.55);
+        }
+        .btn-update {
+            background: linear-gradient(120deg,#22c55e,#15803d); display: none;
+            box-shadow: 0 8px 20px -6px rgba(21,128,61,.5);
+        }
+        .btn-outline {
+            background: linear-gradient(120deg,#64748b,#475569);
+            box-shadow: 0 8px 20px -6px rgba(71,85,105,.4);
+        }
+        .data-management-zone { margin-top: 16px; padding-top: 16px; border-top: 1px dashed #e2d9fb; display: flex; flex-wrap: wrap; gap: 8px; }
+        .btn-sm {
+            flex: 1; min-width: 100px; padding: 9px; font-size: 0.75rem; border-radius: 8px; border: none;
+            font-weight: bold; color: white; cursor: pointer; display: flex; align-items: center;
+            justify-content: center; gap: 4px; transition: transform .15s;
+        }
+        .btn-sm:hover { transform: translateY(-1px); }
+        .btn-export { background: linear-gradient(120deg,var(--info),#0284c7); }
+        .btn-import { background: linear-gradient(120deg,var(--accent-cyan),#0891b2); }
+        .btn-reset { background: linear-gradient(120deg,var(--danger),#dc2626); }
+        .table-section {
+            background: linear-gradient(165deg,#ffffff,#fdfaff); border-radius: 20px; overflow: hidden;
+            box-shadow: 0 10px 28px -10px rgba(124,58,237,.16); border: 1px solid #ede9fe;
+        }
+        .table-wrapper { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.85rem; min-width: 1000px; }
+        thead th {
+            background: linear-gradient(120deg,#6d28d9,#9333ea); color: white; padding: 15px;
+            text-align: left; border-bottom: 3px solid var(--accent-pink);
+        }
+        tbody tr { transition: background .15s; }
+        tbody tr:nth-child(even) { background: #faf7ff; }
+        tbody tr:hover { background: #f3e8ff; }
+        td { padding: 12px 10px; border-bottom: 1px solid #f1eafc; }
+        .btn-edit {
+            background: linear-gradient(120deg,#fde68a,#fbbf24); color: #78350f; padding: 7px 9px;
+            border-radius: 7px; border: none; cursor: pointer; font-weight: bold; margin-right: 4px;
+            transition: transform .15s; position: relative;
+        }
+        .btn-edit::before, .btn-del::before {
+            content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
+            width: 100%; height: 44px; min-width: 38px;
+        }
+        .btn-edit:focus-visible, .btn-del:focus-visible { outline: 2px solid var(--primary-purple2); outline-offset: 2px; }
+        .btn-edit:hover { transform: scale(1.07); }
+        .btn-del {
+            background: linear-gradient(120deg,#fecaca,#f87171); color: #5c1414; padding: 7px 9px;
+            border-radius: 7px; border: none; cursor: pointer; font-weight: bold;
+            transition: transform .15s; position: relative;
+        }
+        .btn-del:hover { transform: scale(1.07); }
+        .status-sync { font-size: 0.8rem; color: var(--primary-purple2); margin-top: 10px; text-align: center; font-weight: bold; }
+
+        /* ══ RESPONSIVE — มือถือ ══ */
+        @media (max-width: 640px) {
+            body { padding: 10px; }
+            .header { padding: 20px 16px; border-radius: 16px; }
+            .header h2 { font-size: 1.05rem; }
+            .container { max-width: 100%; }
+            .card-form { padding: 16px; border-radius: 16px; }
+            .grid-form { grid-template-columns: 1fr; gap: 10px; }
+            .form-actions { flex-direction: column; gap: 8px; }
+            .btn { min-width: unset; width: 100%; }
+            .data-management-zone { flex-wrap: wrap; gap: 7px; }
+            .btn-sm { min-width: 44%; }
+            /* ตาราง — ลดขนาด font + padding เพื่อให้อ่านได้บนจอแคบ */
+            table { font-size: 0.78rem; min-width: 820px; }
+            thead th { padding: 10px 8px; }
+            td { padding: 9px 8px; }
+            /* input ขนาด 16px กัน iOS zoom เมื่อ focus */
+            input, select { font-size: 16px; }
+            .form-toggle-bar { padding: 13px 16px; border-radius: 10px; }
+        }
+        @media (max-width: 400px) {
+            .grid-form { gap: 8px; }
+            .header h2 { font-size: 0.95rem; }
+        }
+
+        /* ══ TIME PICKER ══ */
+        .time-picker-wrap {
+            position: relative;
+        }
+        .time-input-row {
+            display: flex; align-items: center; gap: 0;
+            border: 1.5px solid #e2d9fb; border-radius: 10px;
+            background: #fff; overflow: hidden;
+            transition: border-color .15s, box-shadow .15s;
+        }
+        .time-input-row:focus-within {
+            border-color: var(--primary-purple);
+            box-shadow: 0 0 0 4px rgba(139,92,246,.15);
+        }
+        .time-input-row input[type="text"] {
+            flex: 1; border: none; border-radius: 0; box-shadow: none;
+            padding: 12px 10px; font-size: 16px; background: transparent;
+            min-width: 0;
+        }
+        .time-input-row input[type="text"]:focus {
+            outline: none; border: none; box-shadow: none;
+        }
+        .time-clock-btn {
+            width: 42px; height: 100%; border: none; background: transparent;
+            color: var(--primary-purple); font-size: 18px; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            border-left: 1.5px solid #e2d9fb; transition: background .15s;
+            flex-shrink: 0; padding: 0 10px;
+        }
+        .time-clock-btn:hover { background: #ede9fe; }
+        .time-clock-btn:focus-visible { outline: 2px solid var(--primary-purple); outline-offset: -2px; }
+
+        /* Dropdown panel */
+        .time-picker-panel {
+            display: none; position: absolute; top: calc(100% + 6px); left: 0; right: 0;
+            background: #fff; border: 1.5px solid var(--primary-purple);
+            border-radius: 14px; box-shadow: 0 12px 36px -8px rgba(109,40,217,.28);
+            z-index: 999; padding: 14px 12px 10px; min-width: 220px;
+        }
+        .time-picker-panel.open { display: block; }
+        .tp-label {
+            font-size: 11px; font-weight: 800; color: var(--primary-purple2);
+            text-transform: uppercase; letter-spacing: .6px; margin-bottom: 10px;
+            display: flex; align-items: center; gap: 6px;
+        }
+        /* Hour × Minute wheel — scrollable grids เท่ากัน */
+        .tp-wheels { display: flex; gap: 8px; margin-bottom: 10px; }
+        .tp-col { flex: 1; }
+        .tp-col-lbl {
+            font-size: 10px; font-weight: 700; color: #94a3b8;
+            text-align: center; margin-bottom: 5px; text-transform: uppercase; letter-spacing: .5px;
+        }
+        .tp-scroll {
+            height: 200px; overflow-y: auto; border: 1px solid #ede9fe;
+            border-radius: 9px; background: #faf8ff;
+            scrollbar-width: thin; scrollbar-color: var(--primary-purple) transparent;
+        }
+        .tp-scroll::-webkit-scrollbar { width: 4px; }
+        .tp-scroll::-webkit-scrollbar-thumb { background: var(--primary-purple); border-radius: 2px; }
+        .tp-item {
+            padding: 7px 0; text-align: center; font-size: 15px; font-weight: 600;
+            cursor: pointer; color: #475569; transition: background .12s, color .12s;
+            border-radius: 6px; margin: 1px 3px;
+        }
+        .tp-item:hover { background: #ede9fe; color: var(--primary-purple2); }
+        .tp-item.selected {
+            background: linear-gradient(120deg,var(--primary-purple2),#db2777);
+            color: #fff; font-weight: 800; border-radius: 8px;
+        }
+        /* Confirm button */
+        .tp-confirm {
+            width: 100%; padding: 9px; border-radius: 9px; border: none; cursor: pointer;
+            background: linear-gradient(120deg,var(--primary-purple2),#db2777);
+            color: #fff; font-weight: 800; font-size: 13px;
+            box-shadow: 0 4px 14px -4px rgba(109,40,217,.45);
+            transition: transform .12s, box-shadow .12s;
+        }
+        .tp-confirm:hover { transform: translateY(-1px); box-shadow: 0 6px 18px -4px rgba(109,40,217,.55); }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h2 style="margin:0; letter-spacing: 1px; text-shadow:0 2px 6px rgba(0,0,0,.25);">ฟอร์มบันทึกข้อมูลรถยนต์ Car Priority</h2>
+        <p style="margin:6px 0 0 0; font-size:0.85rem; font-weight:600; text-shadow:0 1px 4px rgba(0,0,0,.3);">ระบบจัดการข้อมูลความปลอดภัยและจัดการสถานะรถยนต์</p>
+        <div id="connStatus" style="margin-top:10px; font-size:0.78rem; display:inline-flex; align-items:center; gap:6px; background:rgba(0,0,0,0.18); padding:5px 14px; border-radius:20px;">
+            <span id="connDot" style="width:8px; height:8px; border-radius:50%; background:#94a3b8; display:inline-block; transition:0.3s;"></span>
+            <span id="connText">กำลังเชื่อมต่อ...</span>
+        </div>
+    </div>
+
+    <div class="form-toggle-bar" onclick="toggleForm()">
+        <span style="font-weight:800; color: var(--dark-purple);">📝 ส่วนจัดการข้อมูล (เพิ่ม/แก้ไข)</span>
+        <span id="toggleIcon">➕</span>
+    </div>
+
+    <div class="card-form" id="formContent">
+        <input type="hidden" id="editIndex" value="-1">
+        <input type="hidden" id="editId" value="">
+        <div class="grid-form">
+            <div class="input-group">
+                <label>กลุ่มรถ</label>
+                <select id="inType">
+                    <option value="รถยนต์ลูกค้าทั่วไป">รถยนต์ลูกค้าทั่วไป</option>
+                    <option value="รถยนต์ลูกค้าสูงอายุ">รถยนต์ลูกค้าสูงอายุ</option>
+                    <option value="รถยนต์ลูกค้าPriority Parking">รถยนต์ลูกค้าPriority Parking</option>
+                    <option value="รถยนต์ลูกค้าSeacon Plus X">รถยนต์ลูกค้าSeacon Plus X</option>
+                    <option value="รถยนต์VIP">รถยนต์VIP</option>
+                    <option value="รถยนต์จอดค้างคืน">รถยนต์จอดค้างคืน</option>
+                </select>
+            </div>
+            <div class="input-group"><label>ว-ด-ป (ค.ศ.) <button type="button" class="btn-now" onclick="fillToday()">📅 วันนี้</button></label><input type="text" id="inDate" placeholder="2026-04-14"></div>
+            <div class="input-group">
+                <label style="color:var(--info)">เวลายืม <button type="button" class="btn-now" onclick="fillBorrowNow()">⏱ ตอนนี้</button></label>
+                <div class="time-picker-wrap" id="tpWrap_borrow">
+                    <div class="time-input-row">
+                        <input type="text" id="inBorrow" placeholder="10:00 น." autocomplete="off"
+                               oninput="onTimeInput('borrow')" onfocus="openTimePicker('borrow')" readonly
+                               style="cursor:pointer">
+                        <button type="button" class="time-clock-btn" onclick="toggleTimePicker('borrow')" aria-label="เลือกเวลายืม" title="เลือกเวลา">🕐</button>
+                    </div>
+                    <div class="time-picker-panel" id="tpPanel_borrow">
+                        <div class="tp-label">🕐 เลือกเวลายืม</div>
+                        <div class="tp-wheels">
+                            <div class="tp-col">
+                                <div class="tp-col-lbl">ชั่วโมง</div>
+                                <div class="tp-scroll" id="tpHour_borrow"></div>
+                            </div>
+                            <div class="tp-col">
+                                <div class="tp-col-lbl">นาที</div>
+                                <div class="tp-scroll" id="tpMin_borrow"></div>
+                            </div>
+                        </div>
+                        <button type="button" class="tp-confirm" onclick="confirmTime('borrow')">✅ เลือกเวลานี้</button>
+                    </div>
+                </div>
+            </div>
+            <div class="input-group"><label>ชื่อ-นามสกุล</label><input type="text" id="inName"></div>
+            <div class="input-group"><label>เบอร์โทร</label><input type="tel" id="inTel"></div>
+            <div class="input-group"><label>ทะเบียน</label><input type="text" id="inPlate"></div>
+            <div class="input-group"><label>จังหวัด</label>
+                <select id="inLp">
+                              <option value="">-- เลือกจังหวัด --</option>
+                    <option value="กรุงเทพมหานคร">กรุงเทพมหานคร</option>
+                    <option value="กระบี่">กระบี่</option><option value="กาญจนบุรี">กาญจนบุรี</option><option value="กาฬสินธุ์">กาฬสินธุ์</option><option value="กำแพงเพชร">กำแพงเพชร</option><option value="ขอนแก่น">ขอนแก่น</option><option value="จันทบุรี">จันทบุรี</option><option value="ฉะเชิงเทรา">ฉะเชิงเทรา</option><option value="ชลบุรี">ชลบุรี</option><option value="ชัยนาท">ชัยนาท</option><option value="ชัยภูมิ">ชัยภูมิ</option><option value="ชุมพร">ชุมพร</option><option value="เชียงราย">เชียงราย</option><option value="เชียงใหม่">เชียงใหม่</option><option value="ตรัง">ตรัง</option><option value="ตราด">ตราด</option><option value="ตาก">ตาก</option><option value="นครนายก">นครนายก</option><option value="นครปฐม">นครปฐม</option><option value="นครพนม">นครพนม</option><option value="นครราชสีมา">นครราชสีมา</option><option value="นครศรีธรรมราช">นครศรีธรรมราช</option><option value="นครสวรรค์">นครสวรรค์</option><option value="นนทบุรี">นนทบุรี</option><option value="นราธิวาส">นราธิวาส</option><option value="น่าน">น่าน</option><option value="บึงกาฬ">บึงกาฬ</option><option value="บุรีรัมย์">บุรีรัมย์</option><option value="ปทุมธานี">ปทุมธานี</option><option value="ประจวบคีรีขันธ์">ประจวบคีรีขันธ์</option><option value="ปราจีนบุรี">ปราจีนบุรี</option><option value="ปัตตานี">ปัตตานี</option><option value="พระนครศรีอยุธยา">พระนครศรีอยุธยา</option><option value="พะเยา">พะเยา</option><option value="พังงา">พังงา</option><option value="พัทลุง">พัทลุง</option><option value="พิจิตร">พิจิตร</option><option value="พิษณุโลก">พิษณุโลก</option><option value="เพชรบุรี">เพชรบุรี</option><option value="เพชรบูรณ์">เพชรบูรณ์</option><option value="แพร่">แพร่</option><option value="ภูเก็ต">ภูเก็ต</option><option value="มหาสารคาม">มหาสารคาม</option><option value="มุกดาหาร">มุกดาหาร</option><option value="แม่ฮ่องสอน">แม่ฮ่องสอน</option><option value="ยโสธร">ยโสธร</option><option value="ยะลา">ยะลา</option><option value="ร้อยเอ็ด">ร้อยเอ็ด</option><option value="ระนอง">ระนอง</option><option value="ระยอง">ระยอง</option><option value="ราชบุรี">ราชบุรี</option><option value="ลพบุรี">ลพบุรี</option><option value="ลำปาง">ลำปาง</option><option value="ลำพูน">ลำพูน</option><option value="เลย">เลย</option><option value="ศรีสะเกษ">ศรีสะเกษ</option><option value="สกลนคร">สกลนคร</option><option value="สงขลา">สงขลา</option><option value="สตูล">สตูล</option><option value="สมุทรปราการ">สมุทรปราการ</option><option value="สมุทรสงคราม">สมุทรสงคราม</option><option value="สมุทรสาคร">สมุทรสาคร</option><option value="สระแก้ว">สระแก้ว</option><option value="สระบุรี">สระบุรี</option><option value="สิงห์บุรี">สิงห์บุรี</option><option value="สุโขทัย">สุโขทัย</option><option value="สุพรรณบุรี">สุพรรณบุรี</option><option value="สุราษฎร์ธานี">สุราษฎร์ธานี</option><option value="สุรินทร์">สุรินทร์</option><option value="หนองคาย">หนองคาย</option><option value="หนองบัวลำภู">หนองบัวลำภู</option><option value="อ่างทอง">อ่างทอง</option><option value="อำนาจเจริญ">อำนาจเจริญ</option><option value="อุดรธานี">อุดรธานี</option><option value="อุตรดิตถ์">อุตรดิตถ์</option><option value="อุทัยธานี">อุทัยธานี</option><option value="อุบลราชธานี">อุบลราชธานี</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label>ยี่ห้อ</label>
+                <select id="inBrand">
+                    <option value="">-- เลือกยี่ห้อ --</option>
+                    <optgroup label="🇯🇵 ญี่ปุ่น (Japanese)">
+                        <option value="Toyota">Toyota</option><option value="Honda">Honda</option><option value="Isuzu">Isuzu</option><option value="Mitsubishi">Mitsubishi</option><option value="Nissan">Nissan</option><option value="Mazda">Mazda</option><option value="Suzuki">Suzuki</option><option value="Subaru">Subaru</option><option value="Lexus">Lexus</option><option value="Hino">Hino</option><option value="Daihatsu">Daihatsu</option><option value="Mitsuoka">Mitsuoka</option>
+                    </optgroup>
+                    <optgroup label="🔋 รถไฟฟ้า & จีน (EV / China)">
+                        <option value="BYD">BYD</option><option value="MG">MG</option><option value="Tesla">Tesla</option><option value="Neta">Neta</option><option value="Deepal">Deepal</option><option value="GWM (Haval)">GWM Haval</option><option value="ORA">GWM ORA</option><option value="AION">AION</option><option value="Changan">Changan</option><option value="Zeekr">Zeekr</option><option value="Chery">Chery</option><option value="Wuling">Wuling</option><option value="Foton">Foton</option><option value="Denza">Denza</option><option value="XPeng">XPeng</option><option value="Rivian">Rivian</option><option value="Jaecoo">Jaecoo</option>
+                    </optgroup>
+                    <optgroup label="🇩🇪 ยุโรป (European)">
+                        <option value="Mercedes-Benz">Mercedes-Benz</option><option value="BMW">BMW</option><option value="Audi">Audi</option><option value="Volkswagen">Volkswagen</option><option value="Volvo">Volvo</option><option value="Porsche">Porsche</option><option value="Mini">Mini</option><option value="Peugeot">Peugeot</option><option value="Land Rover">Land Rover</option><option value="Jaguar">Jaguar</option><option value="Fiat">Fiat</option><option value="Skoda">Skoda</option><option value="Renault">Renault</option>
+                    </optgroup>
+                    <optgroup label="🏎️ Luxury & Supercars">
+                        <option value="Ferrari">Ferrari</option><option value="Lamborghini">Lamborghini</option><option value="Maserati">Maserati</option><option value="Bentley">Bentley</option><option value="Rolls-Royce">Rolls-Royce</option><option value="Aston Martin">Aston Martin</option><option value="McLaren">McLaren</option><option value="Lotus">Lotus</option><option value="Bugatti">Bugatti</option><option value="Pagani">Pagani</option>
+                    </optgroup>
+                    <optgroup label="🇺🇸 อเมริกา & อื่นๆ">
+                        <option value="Ford">Ford</option><option value="Chevrolet">Chevrolet</option><option value="Jeep">Jeep</option><option value="Hyundai">Hyundai</option><option value="Kia">Kia</option><option value="SsangYong">SsangYong</option><option value="Tata">Tata</option><option value="Mahindra">Mahindra</option>
+                    </optgroup>
+                    <option value="อื่นๆ">อื่นๆ (ระบุเอง)</option>
+                </select>
+                <input type="text" id="inBrandOther" placeholder="ระบุยี่ห้อรถ" maxlength="50" style="display:none;margin-top:8px">
+            </div>
+            <div class="input-group"><label>รุ่นรถ</label><input type="text" id="inModel" placeholder="เช่น Altis"></div>
+            <div class="input-group">
+                <label>สี</label>
+                <select id="inColor">
+                   <optgroup label="สียอดนิยม">
+                        <option value="ขาว">ขาว</option><option value="ขาวมุก">ขาวมุก</option><option value="ดำ">ดำ</option><option value="เทา">เทา</option><option value="เทานม">เทานม</option><option value="เทาดำ">เทาดำ</option><option value="เทาเมทัลลิก">เทาเมทัลลิก</option><option value="บรอนซ์">บรอนซ์</option><option value="บรอนซ์เทา">บรอนซ์เทา</option><option value="บรอนซ์เงิน">บรอนซ์เงิน</option><option value="บรอนซ์ทอง">บรอนซ์ทอง</option>
+                    </optgroup>
+                    <optgroup label="โทนสีสัน">
+                        <option value="แดง">แดง</option><option value="แดงเมทัลลิก">แดงเมทัลลิก</option><option value="น้ำเงิน">น้ำเงิน</option><option value="ฟ้า">ฟ้า</option><option value="ฟ้าอ่อน">ฟ้าอ่อน</option><option value="เขียว">เขียว</option><option value="เขียวพาสเทล">เขียวพาสเทล</option><option value="เขียวมิ้น">เขียวมิ้น</option><option value="เขียวขี้ม้า">เขียวขี้ม้า</option><option value="เหลือง">เหลือง</option><option value="ส้ม">ส้ม</option><option value="ส้มเมทัลลิก">ส้มเมทัลลิก</option><option value="ชมพู">ชมพู</option><option value="ชมพูอมม่วง">ชมพูอมม่วง</option><option value="ม่วง">ม่วง</option><option value="ม่วงเมทัลลิก">ม่วงเมทัลลิก</option>
+                    </optgroup>
+                    <optgroup label="โทนพิเศษ">
+                        <option value="น้ำตาล">น้ำตาล</option><option value="น้ำตาล-ส้ม">น้ำตาล-ส้ม</option><option value="ทอง">ทอง</option><option value="เงิน">เงิน</option><option value="เงินเมทัลลิก">เงินม่วงเมทัลลิก</option><option value="ครีม">ครีม</option><option value="เบจ">เบจ</option>
+                    </optgroup>
+                    <optgroup label="สีด้าน/ทูโทน">
+                        <option value="ดำด้าน">ดำด้าน</option><option value="เทาด้าน">เทาด้าน</option><option value="ขาว-ดำ">ขาว-ดำ</option><option value="แดง-ดำ">แดง-ดำ</option><option value="เขียว-เหลือง">เขียว-เหลือง</option><option value="เหลือง-ดำ">เหลือง-ดำ</option>
+                    </optgroup>
+                    <option value="อื่นๆ">อื่นๆ</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label>ชั้น (Level)</label>
+                <select id="inLevel">
+                    <option value="ชั้น.B">ชั้น.B</option>
+                    <option value="ชั้น.B ครึ่ง">ชั้น.B ครึ่ง</option>
+                    <option value="ชั้น.1">ชั้น.1</option>
+                    <option value="ชั้น.1 ครึ่ง">ชั้น.1 ครึ่ง</option>
+                    <option value="ชั้น.2">ชั้น.2</option>
+                    <option value="ชั้น.2 ครึ่ง">ชั้น.2 ครึ่ง</option>
+                    <option value="ชั้น.3">ชั้น.3</option>
+                    <option value="ชั้น.3 ครึ่ง">ชั้น.3 ครึ่ง</option>
+                    <option value="ชั้น.4">ชั้น.4</option>
+                    <option value="ชั้น.4 ครึ่ง">ชั้น.4 ครึ่ง</option>
+                    <option value="ชั้น.5">ชั้น.5</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label style="color: var(--primary-purple);">เวลานำส่งคืน <button type="button" class="btn-now" onclick="fillReturnNow()">⏱ ตอนนี้</button></label>
+                <div class="time-picker-wrap" id="tpWrap_return">
+                    <div class="time-input-row">
+                        <input type="text" id="inReturn" placeholder="17:30 น." autocomplete="off"
+                               oninput="onTimeInput('return')" onfocus="openTimePicker('return')" readonly
+                               style="cursor:pointer">
+                        <button type="button" class="time-clock-btn" onclick="toggleTimePicker('return')" aria-label="เลือกเวลานำส่งคืน" title="เลือกเวลา">🕐</button>
+                    </div>
+                    <div class="time-picker-panel" id="tpPanel_return">
+                        <div class="tp-label">🕐 เลือกเวลานำส่งคืน</div>
+                        <div class="tp-wheels">
+                            <div class="tp-col">
+                                <div class="tp-col-lbl">ชั่วโมง</div>
+                                <div class="tp-scroll" id="tpHour_return"></div>
+                            </div>
+                            <div class="tp-col">
+                                <div class="tp-col-lbl">นาที</div>
+                                <div class="tp-scroll" id="tpMin_return"></div>
+                            </div>
+                        </div>
+                        <button type="button" class="tp-confirm" onclick="confirmTime('return')">✅ เลือกเวลานี้</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="input-group" style="grid-column: 1 / -1;">
+                <label>📝 หมายเหตุ (ถ้ามี)</label>
+                <textarea id="inNote" rows="2" maxlength="500" placeholder="เช่น รถเสีย, จอดผิดที่, แจ้งความจำนงพิเศษ ฯลฯ"
+                    style="width:100%; resize:vertical; font-family:inherit; font-size:0.95rem; padding:10px 12px; border-radius:8px; border:1px solid #d1d5db; box-sizing:border-box;"></textarea>
+            </div>
+        </div>
+
+        <div id="configWarning" style="display:none; background:#fef2f2; border:1px solid var(--danger); color:#991b1b; padding:12px 16px; border-radius:8px; margin-top:15px; font-size:0.85rem; font-weight:bold; text-align:center;">
+            ⚠️ ยังไม่ได้เชื่อมต่อกับ Google Sheets — กรุณาตั้งค่า SCRIPT_URL ในไฟล์ก่อนใช้งาน (ดู README.md)
+        </div>
+
+        <div class="form-actions">
+            <button class="btn btn-save" id="saveBtn" onclick="handleSave()">💾 บันทึกข้อมูลใหม่</button>
+            <button class="btn btn-update" id="updateBtn" onclick="handleUpdate()">✅ อัปเดตข้อมูล</button>
+            <button class="btn btn-outline" onclick="resetForm()">🔄 ล้างแบบฟอร์ม</button>
+        </div>
+
+        <div class="data-management-zone">
+            <button class="btn-sm btn-import" onclick="manualRefresh()">🔄 รีเฟรชข้อมูลจาก Sheets</button>
+        </div>
+        <div style="font-size:0.7rem; color:#94a3b8; text-align:center; margin-top:6px;">
+            * ข้อมูลทั้งหมดเก็บที่ Google Sheets โดยตรง เพื่อป้องกันข้อมูลขัดแย้งกันระหว่างผู้ใช้
+        </div>
+        <div id="syncStatus" class="status-sync"></div>
+    </div>
+
+    <div class="table-section">
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 130px; text-align: center;">จัดการ</th>
+                        <th>กลุ่มรถ</th><th>ว-ด-ป</th><th>ชื่อ-นามสกุล</th><th>ทะเบียน</th><th>จังหวัด</th><th>ยี่ห้อ/รุ่น</th><th>สี</th><th>ชั้น</th><th style="background:var(--info)">เวลายืม</th><th style="background:var(--primary-purple)">เวลานำส่งคืน</th><th>หมายเหตุ</th>
+                    </tr>
+                </thead>
+                <tbody id="dataTableBody"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    /* ====================================================================
+       SCRIPT_URL — วาง Web App URL ที่ได้จาก Apps Script deployment ตรงนี้
+       ==================================================================== */
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzcOz9y-7wEG6Ahlhoq1NynNoQl138K23LWUO_I2BtSqgzsc5QyRB_VADQ7DcJFpXo/exec';
+    // ต้องตรงกับตัวแปร SHARED_TOKEN ใน Code.gs เป๊ะๆ — ถ้าเปลี่ยนค่าฝั่งเซิร์ฟเวอร์ ต้องเปลี่ยนตรงนี้ด้วย
+    const API_TOKEN = 'SBK-PARKING-8f3a1c9d7e2b4f60';
+    const POLL_INTERVAL_MS = 7000;     // ดึงข้อมูลล่าสุดทุก 7 วินาที (real-time)
+    const REQUEST_TIMEOUT_MS = 15000;  // ยกเลิก request ถ้าเซิร์ฟเวอร์ไม่ตอบใน 15 วิ
+
+    let records = [];          // แหล่งข้อมูลหลักอยู่ที่ Google Sheets เสมอ — ตัวแปรนี้คือ cache ในหน้าจอ
+    let lastSyncAt = 0;        // เวลาซิงค์สำเร็จล่าสุด (ms)
+    let isSyncing = false;     // กันยิง fetch ซ้อนกันระหว่าง polling
+    let isSubmitting = false;  // กันกดบันทึก/อัปเดต/ลบซ้ำซ้อน (double-submit) ไม่ให้สร้างข้อมูลซ้ำ
+    let pollTimer = null;
+
+    // ────────────────────────────────────────────────────────────────
+    // ตรวจว่าตั้งค่า SCRIPT_URL แล้วหรือยัง — กันลืมตั้งค่าแล้วงงว่าทำไมไม่ทำงาน
+    // ────────────────────────────────────────────────────────────────
+    function isConfigured() {
+        return SCRIPT_URL && SCRIPT_URL.startsWith('http');
+    }
+
+    // ────────────────────────────────────────────────────────────────
+    // fetch พร้อม timeout — กัน request ค้างตลอดกาลถ้าเน็ตมีปัญหา
+    // ────────────────────────────────────────────────────────────────
+    async function fetchWithTimeout(url, options = {}) {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+        try {
+            const res = await fetch(url, { ...options, signal: controller.signal });
+            return res;
+        } finally {
+            clearTimeout(timer);
+        }
+    }
+
+    // ────────────────────────────────────────────────────────────────
+    // CONNECTION STATUS UI
+    // ────────────────────────────────────────────────────────────────
+    function setConnStatus(state, text) {
+        // state: 'online' | 'syncing' | 'offline' | 'connecting'
+        const dot = document.getElementById('connDot');
+        const label = document.getElementById('connText');
+        if (!dot || !label) return;
+        const colors = { online: '#22c55e', syncing: '#f59e0b', offline: '#ef4444', connecting: '#94a3b8' };
+        dot.style.background = colors[state] || '#94a3b8';
+        dot.style.boxShadow = state === 'online' ? '0 0 6px #22c55e' : 'none';
+        label.innerText = text;
+    }
+
+    // ────────────────────────────────────────────────────────────────
+    // RENDER TABLE
+    // ────────────────────────────────────────────────────────────────
+    function renderTable() {
+        const tbody = document.getElementById('dataTableBody');
+        if (!tbody) return;
+
+        if (!records.length) {
+            tbody.innerHTML = `<tr><td colspan="11" style="text-align:center; padding:30px; color:#94a3b8;">ยังไม่มีข้อมูล — เพิ่มรายการแรกได้จากฟอร์มด้านบน</td></tr>`;
+            return;
+        }
+
+        // เรียงล่าสุดขึ้นก่อน (ตาม updatedAt ถ้ามี ไม่งั้นตามลำดับที่ได้รับมา)
+        const sorted = [...records].sort((a, b) => (Number(b.updatedAt) || 0) - (Number(a.updatedAt) || 0));
+
+        tbody.innerHTML = sorted.map(r => `
+            <tr>
+                <td style="text-align:center;">
+                    <button class="btn-edit" onclick="editRecord('${escAttr(r.id)}')">แก้ไข</button>
+                    <button class="btn-del" onclick="deleteRecord('${escAttr(r.id)}')">ลบ</button>
+                </td>
+                <td>${escHtml(r.type)}</td><td>${escHtml(r.date)}</td><td>${escHtml(r.name)}</td>
+                <td><strong>${escHtml(r.plate)}</strong></td><td>${escHtml(r.province)}</td>
+                <td>${escHtml(r.brand)} ${escHtml(r.model)}</td><td>${escHtml(r.color)}</td><td>${escHtml(r.level)}</td>
+                <td style="font-weight:bold; color:var(--info)">${escHtml(r.borrowTime) || '-'}</td>
+                <td style="font-weight:bold; color:var(--primary-purple)">${escHtml(r.returnTime) || '-'}</td>
+                <td style="color:#64748b; font-size:0.85rem; max-width:150px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${escHtml(r.note || '')}">${escHtml(r.note) || '-'}</td>
+            </tr>
+        `).join('');
+    }
+
+    // ป้องกัน XSS เบื้องต้นเวลาแสดงข้อมูลที่มาจากผู้ใช้คนอื่น (ผ่าน Sheets)
+    function escHtml(v) {
+        if (v === undefined || v === null) return '';
+        return String(v)
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;');
+    }
+    function escAttr(v) {
+        return String(v == null ? '' : v).replace(/'/g, '&#39;');
+    }
+
+    // ────────────────────────────────────────────────────────────────
+    // FORM DATA
+    // ────────────────────────────────────────────────────────────────
+    // อ่านค่าจาก element อย่างปลอดภัย — คืนค่าว่างถ้า element หายไป (กัน TypeError ทำฟอร์มทั้งหน้าใช้งานไม่ได้)
+    function getVal(id) {
+        const el = document.getElementById(id);
+        return el ? String(el.value || '').trim() : '';
+    }
+
+    function getFormData() {
+        // ถ้าเลือก "อื่นๆ" ในยี่ห้อรถ ให้ใช้ข้อความที่กรอกเองแทน — ถ้ายังไม่กรอกอะไรเลยให้เก็บ "อื่นๆ" ไว้ตามเดิม
+        const brandSelect = getVal('inBrand');
+        const brandCustom = getVal('inBrandOther');
+        const brandFinal = (brandSelect === 'อื่นๆ' && brandCustom) ? brandCustom : brandSelect;
+
+        return {
+            type: getVal('inType'),
+            date: getVal('inDate'),
+            borrowTime: getVal('inBorrow'),
+            name: getVal('inName'),
+            tel: getVal('inTel'),
+            plate: getVal('inPlate').replace(/\s+/g, ''),   // ทะเบียนรถตัดช่องว่างทั้งหมด กันเว้นวรรค/แท็บปนมา
+            province: getVal('inLp'),
+            brand: brandFinal,
+            model: getVal('inModel'),
+            color: getVal('inColor'),
+            level: getVal('inLevel'),
+            returnTime: getVal('inReturn'),
+            note: getVal('inNote')
+        };
+    }
+
+    // ตรวจรูปแบบวันที่ ISO (YYYY-MM-DD) อย่างเข้มงวด — ป้องกัน Dashboard อ่านวันที่ผิดพลาดภายหลัง
+    // ปฏิเสธวันที่ที่ "ดูเหมือนถูกต้อง" แต่ไม่มีจริง เช่น 2026-02-30 (JS Date จะ auto-roll ไปเป็นมีนาคมเงียบๆ)
+    function isValidIsoDate(s) {
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return false;
+        const [y, m, d] = s.split('-').map(Number);
+        if (m < 1 || m > 12 || d < 1 || d > 31) return false;
+        const dt = new Date(y, m - 1, d);
+        return dt.getFullYear() === y && dt.getMonth() === m - 1 && dt.getDate() === d;
+    }
+
+    // ตรวจรูปแบบเวลาแบบหลวม — ยอมรับ "10:00", "10:00 น.", "10.00" เพราะผู้ใช้กรอกเองได้หลายแบบ
+    // แต่ปฏิเสธค่าที่ไม่มีตัวเลขเวลาเลย (เช่น พิมพ์ตัวอักษรมั่ว) ค่าว่างผ่านได้เสมอ (เวลาคืนยังไม่ต้องกรอกตอนยืม)
+    function isValidTimeLoose(s) {
+        if (!s) return true;
+        return /\d{1,2}[:.]\d{2}/.test(s);
+    }
+
+    const MAX_LEN = { name: 100, tel: 20, plate: 20, model: 60, date: 10, borrowTime: 20, returnTime: 20, note: 500 };
+
+    function validateFormData(data) {
+        if (!data.plate) return 'กรุณาระบุทะเบียนรถ';
+        if (data.plate.length > MAX_LEN.plate) return 'ทะเบียนรถยาวเกินไป (ไม่เกิน ' + MAX_LEN.plate + ' ตัวอักษร)';
+        if (!data.name) return 'กรุณาระบุชื่อ-นามสกุล';
+        if (data.name.length > MAX_LEN.name) return 'ชื่อ-นามสกุลยาวเกินไป (ไม่เกิน ' + MAX_LEN.name + ' ตัวอักษร)';
+        if (data.tel && data.tel.length > MAX_LEN.tel) return 'เบอร์โทรยาวเกินไป';
+        if (data.tel && !/^[0-9+\-() ]*$/.test(data.tel)) return 'เบอร์โทรมีอักขระที่ไม่ถูกต้อง (กรอกได้เฉพาะตัวเลขและ + - ( ) เว้นวรรค)';
+        if (data.date && !isValidIsoDate(data.date)) return 'รูปแบบวันที่ไม่ถูกต้อง กรุณากรอกเป็น YYYY-MM-DD เช่น 2026-04-14 (กดปุ่ม "📅 วันนี้" เพื่อเติมอัตโนมัติได้)';
+        if (data.borrowTime && !isValidTimeLoose(data.borrowTime)) return 'รูปแบบเวลายืมไม่ถูกต้อง กรุณากรอกเป็น HH:MM เช่น 10:00';
+        if (data.returnTime && !isValidTimeLoose(data.returnTime)) return 'รูปแบบเวลาคืนไม่ถูกต้อง กรุณากรอกเป็น HH:MM เช่น 17:30';
+        if (data.model && data.model.length > MAX_LEN.model) return 'รุ่นรถยาวเกินไป';
+        if (data.note && data.note.length > MAX_LEN.note) return 'หมายเหตุยาวเกินไป (ไม่เกิน ' + MAX_LEN.note + ' ตัวอักษร)';
+        return null;
+    }
+
+    // ────────────────────────────────────────────────────────────────
+    // SAVE (INSERT)
+    // ────────────────────────────────────────────────────────────────
+    async function handleSave() {
+        if (isSubmitting) return;   // กันกดซ้ำขณะกำลังบันทึกอยู่ (double-submit)
+        if (!isConfigured()) {
+            alert('⚠️ ยังไม่ได้เชื่อมต่อระบบ\n\nกรุณาตั้งค่า SCRIPT_URL ในไฟล์ก่อนใช้งาน (ดูคำแนะนำใน README.md)\nหากตั้งค่าแล้วแต่ยังขึ้นข้อความนี้ ให้ตรวจสอบว่าวาง URL ถูกต้องและไม่มีช่องว่างเกิน');
+            return;
+        }
+        const data = getFormData();
+        const err = validateFormData(data);
+        if (err) { alert(err); return; }
+
+        isSubmitting = true;
+        const saveBtn = document.getElementById('saveBtn');
+        setButtonLoading(saveBtn, true, '⏳ กำลังบันทึก...');
+
+        try {
+            const result = await callApi_('INSERT', data);
+            if (!result || !result.ok) throw new Error((result && result.error) || 'บันทึกไม่สำเร็จ (ไม่ได้รับการตอบกลับที่ถูกต้องจากเซิร์ฟเวอร์)');
+            if (!result.record) throw new Error('บันทึกสำเร็จที่เซิร์ฟเวอร์ แต่ไม่ได้รับข้อมูลกลับมา กรุณากดรีเฟรชเพื่อตรวจสอบ');
+
+            // เซิร์ฟเวอร์เป็นผู้สร้าง id จริง — เพิ่มเข้า cache ทันทีให้เห็นผลไว (optimistic update)
+            records.unshift(result.record);
+            renderTable();
+            resetForm();
+            showSyncStatus('✅ บันทึกเรียบร้อย (แถวที่ ' + result.row + ')', 'success');
+            lastSyncAt = result.serverTime || Date.now();
+        } catch (e) {
+            const msg = (e && e.message) || 'เกิดข้อผิดพลาดที่ไม่ทราบสาเหตุ';
+            showSyncStatus('❌ บันทึกไม่สำเร็จ: ' + msg, 'error');
+            alert('❌ บันทึกไม่สำเร็จ\n\n' + msg);
+        } finally {
+            isSubmitting = false;
+            setButtonLoading(saveBtn, false, '💾 บันทึกข้อมูลใหม่');
+        }
+    }
+
+    // ────────────────────────────────────────────────────────────────
+    // EDIT (โหลดข้อมูลเข้าฟอร์ม)
+    // ────────────────────────────────────────────────────────────────
+    // ตั้งค่าให้ element อย่างปลอดภัย — ข้ามเงียบๆ ถ้า element หายไป แทนที่จะ throw error
+    function setVal(id, val) {
+        const el = document.getElementById(id);
+        if (el) el.value = val || '';
+    }
+
+    // เซ็ตค่ายี่ห้อรถลง select — ถ้าค่าที่ได้ (เช่นจากข้อมูลเก่า) ไม่ตรงกับ option ไหนใน list เลย
+    // ให้ถือว่าเป็นยี่ห้อที่พิมพ์เอง: เลือก "อื่นๆ" แล้วเติมข้อความลงช่องกรอกเอง พร้อมเปิดช่องให้เห็น
+    function setBrandVal(brand) {
+        const sel = document.getElementById('inBrand');
+        const other = document.getElementById('inBrandOther');
+        if (!sel) return;
+
+        const matched = Array.from(sel.options).some(function(o) { return o.value === brand; });
+        if (brand && !matched) {
+            sel.value = 'อื่นๆ';
+            if (other) { other.value = brand; other.style.display = 'block'; }
+        } else {
+            sel.value = brand || '';
+            if (other) { other.value = ''; other.style.display = (sel.value === 'อื่นๆ') ? 'block' : 'none'; }
+        }
+    }
+
+    // แสดง/ซ่อนช่องกรอกยี่ห้อเองเมื่อผู้ใช้เปลี่ยนตัวเลือกในดรอปดาวน์
+    document.addEventListener('DOMContentLoaded', function() {
+        const sel = document.getElementById('inBrand');
+        const other = document.getElementById('inBrandOther');
+        if (!sel || !other) return;
+        sel.addEventListener('change', function() {
+            if (sel.value === 'อื่นๆ') {
+                other.style.display = 'block';
+                other.focus();
+            } else {
+                other.style.display = 'none';
+                other.value = '';
+            }
+        });
+    });
+
+    function editRecord(id) {
+        if (isSubmitting) { alert('กำลังบันทึก/อัปเดตข้อมูลอยู่ กรุณารอสักครู่แล้วลองใหม่'); return; }
+
+        const r = records.find(x => String(x.id) === String(id));
+        if (!r) { alert('ไม่พบรายการนี้ — อาจถูกลบไปแล้วจากเครื่องอื่น กรุณารีเฟรช'); return; }
+
+        setVal('editId', r.id);
+        setVal('inType', r.type);
+        setVal('inDate', r.date);
+        setVal('inBorrow', r.borrowTime);
+        setVal('inName', r.name);
+        setVal('inTel', r.tel);
+        setVal('inPlate', r.plate);
+        setVal('inLp', r.province);
+        setBrandVal(r.brand);
+        setVal('inModel', r.model);
+        setVal('inColor', r.color);
+        setVal('inLevel', r.level);
+        setVal('inReturn', r.returnTime);
+        setVal('inNote', r.note);
+
+        const saveBtn = document.getElementById('saveBtn');
+        const updateBtn = document.getElementById('updateBtn');
+        if (saveBtn) saveBtn.style.display = 'none';
+        if (updateBtn) updateBtn.style.display = 'flex';
+
+        const formContent = document.getElementById('formContent');
+        if (formContent && formContent.style.display === 'none') toggleForm();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // ────────────────────────────────────────────────────────────────
+    // UPDATE
+    // ────────────────────────────────────────────────────────────────
+    async function handleUpdate() {
+        if (isSubmitting) return;   // กันกดซ้ำขณะกำลังอัปเดตอยู่
+        if (!isConfigured()) {
+            alert('⚠️ ยังไม่ได้เชื่อมต่อระบบ\n\nกรุณาตั้งค่า SCRIPT_URL ในไฟล์ก่อนใช้งาน (ดูคำแนะนำใน README.md)');
+            return;
+        }
+        const id = getVal('editId');
+        if (!id) { alert('ไม่พบรายการที่กำลังแก้ไข'); return; }
+
+        const data = getFormData();
+        const err = validateFormData(data);
+        if (err) { alert(err); return; }
+        data.id = id;
+
+        isSubmitting = true;
+        const updateBtn = document.getElementById('updateBtn');
+        setButtonLoading(updateBtn, true, '⏳ กำลังอัปเดต...');
+
+        try {
+            const result = await callApi_('UPDATE', data);
+            if (!result || !result.ok) throw new Error((result && result.error) || 'อัปเดตไม่สำเร็จ (ไม่ได้รับการตอบกลับที่ถูกต้องจากเซิร์ฟเวอร์)');
+            if (!result.record) throw new Error('อัปเดตสำเร็จที่เซิร์ฟเวอร์ แต่ไม่ได้รับข้อมูลกลับมา กรุณากดรีเฟรชเพื่อตรวจสอบ');
+
+            const idx = records.findIndex(x => String(x.id) === String(id));
+            if (idx > -1) records[idx] = result.record; else records.unshift(result.record);
+            renderTable();
+            resetForm();
+            const saveBtn = document.getElementById('saveBtn');
+            if (saveBtn) saveBtn.style.display = 'flex';
+            if (updateBtn) updateBtn.style.display = 'none';
+            showSyncStatus('✅ อัปเดตเรียบร้อย (แถวที่ ' + result.row + ')', 'success');
+            lastSyncAt = result.serverTime || Date.now();
+        } catch (e) {
+            const msg = (e && e.message) || 'เกิดข้อผิดพลาดที่ไม่ทราบสาเหตุ';
+            showSyncStatus('❌ อัปเดตไม่สำเร็จ: ' + msg, 'error');
+            alert('❌ อัปเดตไม่สำเร็จ\n\n' + msg);
+        } finally {
+            isSubmitting = false;
+            setButtonLoading(updateBtn, false, '✅ อัปเดตข้อมูล');
+        }
+    }
+
+    // ────────────────────────────────────────────────────────────────
+    // DELETE
+    // ────────────────────────────────────────────────────────────────
+    async function deleteRecord(id) {
+        if (isSubmitting) { alert('กำลังประมวลผลรายการอื่นอยู่ กรุณารอสักครู่แล้วลองใหม่'); return; }
+        if (!confirm('ยืนยันลบรายการนี้? การลบจะมีผลกับ Google Sheets ทันทีและไม่สามารถย้อนกลับได้')) return;
+
+        isSubmitting = true;
+        const prevRecords = records;
+        records = records.filter(x => String(x.id) !== String(id));   // optimistic update
+        renderTable();
+        showSyncStatus('⏳ กำลังลบ...', 'pending');
+
+        // ถ้ากำลังแก้ไขรายการที่เพิ่งลบไปพอดี — เคลียร์ฟอร์มทันที กันผู้ใช้กดอัปเดตทับรายการที่ไม่มีอยู่แล้ว
+        if (getVal('editId') === String(id)) {
+            resetForm();
+            const saveBtn = document.getElementById('saveBtn');
+            const updateBtn = document.getElementById('updateBtn');
+            if (saveBtn) saveBtn.style.display = 'flex';
+            if (updateBtn) updateBtn.style.display = 'none';
+        }
+
+        try {
+            const result = await callApi_('DELETE', { id });
+            if (!result || !result.ok) throw new Error((result && result.error) || 'ลบไม่สำเร็จ (ไม่ได้รับการตอบกลับที่ถูกต้องจากเซิร์ฟเวอร์)');
+            showSyncStatus('✅ ลบเรียบร้อย', 'success');
+            lastSyncAt = result.serverTime || Date.now();
+        } catch (e) {
+            records = prevRecords;   // rollback ถ้าลบไม่สำเร็จจริง
+            renderTable();
+            showSyncStatus('❌ ลบไม่สำเร็จ: ' + ((e && e.message) || 'เกิดข้อผิดพลาดที่ไม่ทราบสาเหตุ'), 'error');
+        } finally {
+            isSubmitting = false;
+        }
+    }
+
+    // ────────────────────────────────────────────────────────────────
+    // CORE API CALL — รู้ผลจริงจาก Apps Script (ไม่ใช้ no-cors)
+    // ────────────────────────────────────────────────────────────────
+    async function callApi_(action, data) {
+        if (!isConfigured()) {
+            throw new Error('ยังไม่ได้ตั้งค่า SCRIPT_URL กรุณาวาง Web App URL จาก Apps Script ในโค้ด');
+        }
+        let body;
+        try {
+            body = JSON.stringify(Object.assign({}, data, { action: action, token: API_TOKEN }));
+        } catch (e) {
+            throw new Error('ไม่สามารถแปลงข้อมูลเป็น JSON ได้ — ข้อมูลในฟอร์มอาจมีรูปแบบผิดปกติ');
+        }
+
+        let res;
+        try {
+            res = await fetchWithTimeout(SCRIPT_URL, {
+                method: 'POST',
+                // หมายเหตุ: ไม่ตั้ง Content-Type เป็น application/json เพื่อเลี่ยง CORS preflight (OPTIONS)
+                // ซึ่ง Apps Script Web App ไม่รองรับ — ใช้ text/plain แล้วฝั่ง Apps Script แกะ JSON เองแทน
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: body
+            });
+        } catch (e) {
+            if (e && e.name === 'AbortError') throw new Error('หมดเวลาเชื่อมต่อ (เซิร์ฟเวอร์ไม่ตอบกลับภายใน ' + (REQUEST_TIMEOUT_MS / 1000) + ' วินาที)');
+            throw new Error('เชื่อมต่อ Apps Script ไม่สำเร็จ — ตรวจสอบอินเทอร์เน็ตหรือ URL (' + ((e && e.message) || 'unknown') + ')');
+        }
+
+        if (!res.ok) throw new Error('เซิร์ฟเวอร์ตอบกลับผิดพลาด (HTTP ' + res.status + ')');
+
+        // แยก error การ parse JSON ออกมาให้ชัดเจน — กันสับสนกับ network error
+        // (มักเกิดเมื่อ Apps Script ส่ง HTML error page กลับมาแทน JSON เช่น ตอน deploy ผิดสิทธิ์)
+        try {
+            return await res.json();
+        } catch (e) {
+            throw new Error('เซิร์ฟเวอร์ตอบกลับไม่ใช่รูปแบบ JSON ที่ถูกต้อง — ตรวจสอบว่า Apps Script Deploy ถูกต้อง (Who has access: Anyone)');
+        }
+    }
+
+    // ────────────────────────────────────────────────────────────────
+    // POLLING — ดึงข้อมูลล่าสุดจาก Sheets ทุก POLL_INTERVAL_MS (real-time)
+    // ────────────────────────────────────────────────────────────────
+    // merge ผลลัพธ์จาก incremental sync เข้ากับ records ในเครื่อง:
+    //   - เอาออกทุก record ที่ id ไม่อยู่ใน `ids` แล้ว (แปลว่าถูกลบไปจากเครื่องอื่น)
+    //   - upsert record ที่ได้มาใหม่/เปลี่ยนแปลง (เพิ่มถ้ายังไม่มี, แทนที่ถ้ามีอยู่แล้ว)
+    function mergeRecords_(current, incomingRecords, allIds) {
+        let next = current;
+        if (Array.isArray(allIds)) {
+            const idSet = new Set(allIds.map(String));
+            next = next.filter(function(r) { return r && idSet.has(String(r.id)); });
+        }
+        if (incomingRecords.length) {
+            const byId = new Map(next.map(function(r) { return [String(r.id), r]; }));
+            incomingRecords.forEach(function(r) {
+                if (r && r.id != null) byId.set(String(r.id), r);
+            });
+            next = Array.from(byId.values());
+        }
+        return next;
+    }
+
+    async function syncFromServer(showLoadingState) {
+        if (!isConfigured()) {
+            setConnStatus('offline', 'ยังไม่ได้ตั้งค่า SCRIPT_URL');
+            return;
+        }
+        if (isSyncing) return;   // กันยิงซ้อนกัน
+        isSyncing = true;
+        if (showLoadingState) setConnStatus('syncing', 'กำลังซิงค์...');
+
+        try {
+            // ส่ง since=lastSyncAt เพื่อทำ incremental sync — ครั้งแรก (lastSyncAt=0) จะได้ข้อมูลทั้งหมด
+            const url = SCRIPT_URL + '?since=' + lastSyncAt + '&_=' + Date.now();   // _= กัน browser cache
+            const res = await fetchWithTimeout(url, { method: 'GET' });
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+
+            let json;
+            try {
+                json = await res.json();
+            } catch (parseErr) {
+                throw new Error('เซิร์ฟเวอร์ตอบกลับไม่ใช่รูปแบบ JSON ที่ถูกต้อง');
+            }
+            if (!json || !json.ok) throw new Error((json && json.error) || 'โหลดข้อมูลไม่สำเร็จ');
+
+            // ป้องกันกรณี server ส่ง records มาผิดรูปแบบ (ไม่ใช่ array) — กัน renderTable พังตอน .map/.sort
+            const incomingRecords = Array.isArray(json.records) ? json.records : [];
+            const mergedRecords = mergeRecords_(records, incomingRecords, json.ids);
+
+            // ถ้ากำลังแก้ไขรายการอยู่ ตรวจว่ารายการนั้นยังอยู่ไหม — เตือนถ้าถูกลบ/แก้จากเครื่องอื่นระหว่างเปิดฟอร์มค้างไว้
+            const editingId = getVal('editId');
+            if (editingId) {
+                const stillExists = mergedRecords.some(function(r) { return r && String(r.id) === editingId; });
+                if (!stillExists) {
+                    showSyncStatus('⚠️ รายการที่กำลังแก้ไขถูกลบไปจากเครื่องอื่นแล้ว', 'error');
+                }
+            }
+
+            records = mergedRecords;
+            lastSyncAt = json.serverTime || Date.now();
+            renderTable();
+            setConnStatus('online', 'เชื่อมต่อแล้ว · อัปเดตล่าสุด ' + nowTimeStr());
+        } catch (e) {
+            setConnStatus('offline', 'ขาดการเชื่อมต่อ — กำลังลองใหม่... (' + ((e && e.message) || '') + ')');
+        } finally {
+            isSyncing = false;
+        }
+    }
+
+    function manualRefresh() {
+        syncFromServer(true);
+    }
+
+    function nowTimeStr() {
+        return new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
+    }
+
+    let _visHandlerAttached = false;   // กัน visibilitychange listener ซ้อนกัน
+    function startPolling() {
+        if (pollTimer) clearInterval(pollTimer);
+        pollTimer = setInterval(() => syncFromServer(false), POLL_INTERVAL_MS);
+        // หยุด polling เมื่อแท็บไม่ active เพื่อประหยัด quota ของ Apps Script, กลับมาทำงานเมื่อสลับมาดูใหม่
+        if (_visHandlerAttached) return;
+        _visHandlerAttached = true;
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                if (pollTimer) clearInterval(pollTimer);
+            } else {
+                syncFromServer(true);
+                if (pollTimer) clearInterval(pollTimer);  // กัน interval ซ้อน
+                pollTimer = setInterval(() => syncFromServer(false), POLL_INTERVAL_MS);
+            }
+        });
+    }
+
+    // ────────────────────────────────────────────────────────────────
+    // UI HELPERS
+    // ────────────────────────────────────────────────────────────────
+    function setButtonLoading(btn, loading, label) {
+        if (!btn) return;
+        btn.disabled = loading;
+        btn.style.opacity = loading ? '0.6' : '1';
+        btn.style.cursor = loading ? 'not-allowed' : 'pointer';
+        btn.innerText = label;
+    }
+
+    function showSyncStatus(text, type) {
+        const status = document.getElementById('syncStatus');
+        if (!status) return;
+        const colorMap = { success: 'var(--success)', error: 'var(--danger)', pending: 'var(--warning)' };
+        status.style.color = colorMap[type] || 'var(--primary-purple)';
+        status.innerText = text;
+        if (type !== 'pending') {
+            setTimeout(() => { if (status.innerText === text) status.innerText = ''; }, 4000);
+        }
+    }
+
+    // เติมวัน-เวลาปัจจุบันให้อัตโนมัติ — วันที่ใช้รูปแบบ ค.ศ. มาตรฐาน ISO (YYYY-MM-DD)
+    // ผู้ใช้แก้ไขเองได้เสมอ ฟังก์ชันนี้แค่เติมค่าเริ่มต้นให้ ไม่บังคับ
+    function getIsoDateStr() {
+        const now = new Date();
+        const yyyy = now.getFullYear();   // ค.ศ. เต็ม 4 หลัก (ไม่แปลงเป็น พ.ศ.)
+        const mm = String(now.getMonth() + 1).padStart(2, '0');
+        const dd = String(now.getDate()).padStart(2, '0');
+        return yyyy + '-' + mm + '-' + dd;
+    }
+    function getTimeStr() {
+        const now = new Date();
+        return String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0') + ' น.';
+    }
+
+    function fillToday() {
+        const el = document.getElementById('inDate');
+        if (el) el.value = getIsoDateStr();
+    }
+    function fillBorrowNow() {
+        const el = document.getElementById('inBorrow');
+        if (el) el.value = getTimeStr();
+    }
+    function fillReturnNow() {
+        const el = document.getElementById('inReturn');
+        if (el) el.value = getTimeStr();
+    }
+    function fillCurrentDateTime() {
+        fillToday();
+        fillBorrowNow();
+        // เวลาคืนเว้นว่างไว้โดยตั้งใจ — กรอกตอนรับรถคืนจริง (กดปุ่ม "⏱ ตอนนี้" ข้างช่องได้)
+    }
+
+    function resetForm() {
+        document.querySelectorAll('#formContent input:not(#editIndex):not(#editId)').forEach(function(i) { i.value = ''; });
+        document.querySelectorAll('#formContent select').forEach(function(s) { s.selectedIndex = 0; });
+        document.querySelectorAll('#formContent textarea').forEach(function(t) { t.value = ''; });
+        const brandOther = document.getElementById('inBrandOther');
+        if (brandOther) brandOther.style.display = 'none';   // ซ่อนช่องกรอกยี่ห้อเองกลับตามค่าเริ่มต้นด้วยทุกครั้งที่ล้างฟอร์ม
+        setVal('editId', '');
+        fillCurrentDateTime();   // เติมวัน-เวลายืมปัจจุบันให้ใหม่ทุกครั้งที่ล้างฟอร์ม
+    }
+
+    function toggleForm() {
+        const f = document.getElementById('formContent');
+        if (!f) return;
+        const icon = document.getElementById('toggleIcon');
+        const isHidden = f.style.display === 'none';
+        f.style.display = isHidden ? 'block' : 'none';
+        if (icon) icon.innerText = isHidden ? '➖' : '➕';
+    }
+
+    // ────────────────────────────────────────────────────────────────
+    // INIT
+    // ────────────────────────────────────────────────────────────────
+    // ดักจับ error ที่หลุดรอดจาก try/catch ทั้งหมด (เช่น syntax ผิดคาด, browser ไม่รองรับ API บางตัว)
+    // กันหน้าขาว/ค้างเงียบๆ โดยไม่รู้สาเหตุ — แสดงสถานะที่เห็นได้แทน
+    window.addEventListener('error', function(ev) {
+        console.error('Global error:', ev.error || ev.message);
+        setConnStatus('offline', '⚠️ เกิดข้อผิดพลาดในระบบ — ลองรีเฟรชหน้าเว็บ');
+    });
+    window.addEventListener('unhandledrejection', function(ev) {
+        console.error('Unhandled promise rejection:', ev.reason);
+        setConnStatus('offline', '⚠️ เกิดข้อผิดพลาดในการเชื่อมต่อ — ลองรีเฟรชหน้าเว็บ');
+    });
+
+    window.addEventListener('DOMContentLoaded', function() {
+        try {
+            fillCurrentDateTime();   // เติมวัน-เวลายืมปัจจุบันให้ตั้งแต่เปิดฟอร์มครั้งแรก
+        } catch (e) {
+            console.error('fillCurrentDateTime error:', e);   // ไม่ critical — ปล่อยให้ผู้ใช้กรอกเองได้ ไม่บล็อกการใช้งาน
+        }
+        try {
+            if (!isConfigured()) {
+                setConnStatus('offline', '⚠️ ยังไม่ได้ตั้งค่า SCRIPT_URL ในโค้ด');
+                const warn = document.getElementById('configWarning');
+                if (warn) warn.style.display = 'block';
+                renderTable();
+                return;
+            }
+            syncFromServer(true).then(startPolling).catch(function(e) {
+                console.error('startPolling error:', e);
+                setConnStatus('offline', '⚠️ เริ่มระบบซิงค์ไม่สำเร็จ — ลองรีเฟรชหน้าเว็บ');
+            });
+        } catch (e) {
+            console.error('Init error:', e);
+            setConnStatus('offline', '⚠️ เริ่มต้นระบบไม่สมบูรณ์ — ลองรีเฟรชหน้าเว็บ');
+        }
+    });
+
+    window.addEventListener('online', function() {
+        try { syncFromServer(true); } catch (e) { console.error('online handler error:', e); }
+    });
+    window.addEventListener('offline', function() { setConnStatus('offline', 'อุปกรณ์ไม่มีอินเทอร์เน็ต'); });
+    // ════════════════════════════════════════════════════════
+    // TIME PICKER — wheel ชั่วโมง 00-23 + นาที 00-59 ครบทุกนาที
+    // ════════════════════════════════════════════════════════
+    // state: ชั่วโมงและนาทีที่เลือกไว้ในแต่ละ picker
+    const tpState = { borrow: { h: null, m: null }, return: { h: null, m: null } };
+    let tpOpen = null;   // id ของ picker ที่เปิดอยู่ตอนนี้ ('borrow'|'return'|null)
+
+    function buildTimePicker(id) {
+        // ── Hour wheel: 00–23 ──
+        const hEl = document.getElementById('tpHour_' + id);
+        if (hEl) {
+            hEl.innerHTML = Array.from({length:24},(_,i)=>String(i).padStart(2,'0'))
+                .map(h=>`<div class="tp-item" data-h="${h}" onclick="selectHour('${id}','${h}')">${h}</div>`)
+                .join('');
+        }
+        // ── Minute wheel: 00–59 ทุกนาที ──
+        const mEl = document.getElementById('tpMin_' + id);
+        if (mEl) {
+            mEl.innerHTML = Array.from({length:60},(_,i)=>String(i).padStart(2,'0'))
+                .map(m=>`<div class="tp-item" data-m="${m}" onclick="selectMin('${id}','${m}')">${m}</div>`)
+                .join('');
+        }
+    }
+
+    function openTimePicker(id) {
+        if (tpOpen && tpOpen !== id) closeTimePicker(tpOpen);
+        const panel = document.getElementById('tpPanel_' + id);
+        if (!panel) return;
+        panel.classList.add('open');
+        tpOpen = id;
+        // sync ค่าที่มีในช่อง input กลับเข้า picker
+        syncPickerFromInput(id);
+    }
+
+    function closeTimePicker(id) {
+        const panel = document.getElementById('tpPanel_' + id);
+        if (panel) panel.classList.remove('open');
+        if (tpOpen === id) tpOpen = null;
+    }
+
+    function toggleTimePicker(id) {
+        const panel = document.getElementById('tpPanel_' + id);
+        if (!panel) return;
+        if (panel.classList.contains('open')) {
+            closeTimePicker(id);
+        } else {
+            openTimePicker(id);
+        }
+    }
+
+    function syncPickerFromInput(id) {
+        const inputEl = document.getElementById(id === 'borrow' ? 'inBorrow' : 'inReturn');
+        if (!inputEl) return;
+        const raw = inputEl.value.replace(' น.','').trim();
+        const parts = raw.split(':');
+        if (parts.length === 2) {
+            const h = parts[0].padStart(2,'0');
+            const m = parts[1].replace(/\D/g,'').slice(0,2).padStart(2,'0');
+            const hNum = parseInt(h,10), mNum = parseInt(m,10);
+            if (!isNaN(hNum) && !isNaN(mNum) && hNum>=0 && hNum<=23 && mNum>=0 && mNum<=59) {
+                tpState[id].h = String(hNum).padStart(2,'0');
+                tpState[id].m = String(mNum).padStart(2,'0');
+                highlightSelected(id);
+                scrollToSelected(id);
+            }
+        }
+    }
+
+    function highlightSelected(id) {
+        // hours
+        const hEl = document.getElementById('tpHour_' + id);
+        if (hEl) {
+            hEl.querySelectorAll('.tp-item').forEach(el => {
+                el.classList.toggle('selected', el.dataset.h === tpState[id].h);
+            });
+        }
+        // minutes
+        const mEl = document.getElementById('tpMin_' + id);
+        if (mEl) {
+            mEl.querySelectorAll('.tp-item').forEach(el => {
+                el.classList.toggle('selected', el.dataset.m === tpState[id].m);
+            });
+        }
+    }
+
+    function scrollToSelected(id) {
+        const scrollTo = (scrollEl) => {
+            if (!scrollEl) return;
+            const sel = scrollEl.querySelector('.selected');
+            if (sel) {
+                const offset = sel.offsetTop - scrollEl.offsetHeight / 2 + sel.offsetHeight / 2;
+                scrollEl.scrollTo({ top: Math.max(0, offset), behavior: 'smooth' });
+            }
+        };
+        scrollTo(document.getElementById('tpHour_' + id));
+        scrollTo(document.getElementById('tpMin_' + id));
+    }
+
+    function selectHour(id, h) {
+        tpState[id].h = h;
+        if (tpState[id].m === null) tpState[id].m = '00';
+        highlightSelected(id);
+        updatePreview(id);
+    }
+
+    function selectMin(id, m) {
+        tpState[id].m = m;
+        if (tpState[id].h === null) tpState[id].h = '00';
+        highlightSelected(id);
+        updatePreview(id);
+    }
+
+    function updatePreview(id) {
+        // แสดงเวลาที่เลือกใน input แบบ preview (ก่อนกด confirm)
+        if (tpState[id].h !== null && tpState[id].m !== null) {
+            const inputEl = document.getElementById(id === 'borrow' ? 'inBorrow' : 'inReturn');
+            if (inputEl) inputEl.value = tpState[id].h + ':' + tpState[id].m + ' น.';
+        }
+    }
+
+    function confirmTime(id) {
+        if (tpState[id].h === null || tpState[id].m === null) {
+            // ถ้ายังไม่ได้เลือกทั้งคู่ ใช้เวลาปัจจุบัน
+            const now = new Date();
+            tpState[id].h = String(now.getHours()).padStart(2,'0');
+            tpState[id].m = String(now.getMinutes()).padStart(2,'0');
+        }
+        const inputEl = document.getElementById(id === 'borrow' ? 'inBorrow' : 'inReturn');
+        if (inputEl) inputEl.value = tpState[id].h + ':' + tpState[id].m + ' น.';
+        highlightSelected(id);
+        closeTimePicker(id);
+    }
+
+    function onTimeInput(id) {
+        // กรณีกรอกตรง (ไม่ผ่าน picker) — sync picker state ตาม
+        syncPickerFromInput(id);
+    }
+
+    // ปิด picker เมื่อกดพื้นที่อื่นนอก wrap
+    document.addEventListener('click', function(e) {
+        if (!tpOpen) return;
+        const wrap = document.getElementById('tpWrap_' + tpOpen);
+        if (wrap && !wrap.contains(e.target)) closeTimePicker(tpOpen);
+    });
+
+    // กด Escape ปิด picker
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && tpOpen) closeTimePicker(tpOpen);
+    });
+
+    // สร้าง picker ทั้งสองอันตอนโหลดหน้า
+    document.addEventListener('DOMContentLoaded', function() {
+        buildTimePicker('borrow');
+        buildTimePicker('return');
+    });
+
+    // override fillBorrowNow / fillReturnNow ให้ sync กับ picker state ด้วย
+    function fillBorrowNow() {
+        const now = new Date();
+        const h = String(now.getHours()).padStart(2,'0');
+        const m = String(now.getMinutes()).padStart(2,'0');
+        tpState.borrow.h = h;
+        tpState.borrow.m = m;
+        const el = document.getElementById('inBorrow');
+        if (el) el.value = h + ':' + m + ' น.';
+        highlightSelected('borrow');
+    }
+    function fillReturnNow() {
+        const now = new Date();
+        const h = String(now.getHours()).padStart(2,'0');
+        const m = String(now.getMinutes()).padStart(2,'0');
+        tpState.return.h = h;
+        tpState.return.m = m;
+        const el = document.getElementById('inReturn');
+        if (el) el.value = h + ':' + m + ' น.';
+        highlightSelected('return');
+    }
+    // override getTimeStr ให้ format ตรงกัน
+    function getTimeStr() {
+        const now = new Date();
+        return String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0') + ' น.';
+    }
+
+</script>
+</body>
+</html>

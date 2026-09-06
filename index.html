@@ -127,6 +127,9 @@
         tbody tr { transition: background .15s; }
         tbody tr:nth-child(even) { background: #faf7ff; }
         tbody tr:hover { background: #f3e8ff; }
+        /* คอลัมน์ ว-ด-ป (ลำดับที่ 3) — บังคับความกว้างขั้นต่ำให้พอดีกับวันที่รูปแบบ YYYY-MM-DD (10 ตัวอักษร)
+           เสมอ ไม่ว่าจอจะแคบแค่ไหน กันปัญหาตัวเลขวันที่ตกบรรทัดหรือโดนตัดด้วย ... ที่เห็นได้ยาก */
+        td:nth-child(3), th:nth-child(3) { min-width: 92px; white-space: nowrap; }
         td {
             padding: 12px 10px; border-bottom: 1px solid #f1eafc;
             /* บังคับให้ทุกคอลัมน์แสดงข้อความแถวเดียวเสมอ (ไม่ตกบรรทัด) อ่านง่ายและแถวสูงเท่ากันทั้งตาราง
@@ -268,6 +271,28 @@
             transition: opacity .35s ease, visibility .35s ease;
         }
         #lockScreen.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+        /* วงแสงสีสันลอยตกแต่งพื้นหลัง — เพิ่มความมีชีวิตชีวาให้หน้าโลโก้ */
+        .ls-orb {
+            position: absolute; border-radius: 50%; pointer-events: none;
+            background: radial-gradient(circle, rgba(255,255,255,.32), rgba(255,255,255,0) 70%);
+            filter: blur(1px); animation: lsOrbFloat 7s ease-in-out infinite;
+        }
+        .ls-orb1 { width: 200px; height: 200px; top: -50px; left: -50px; animation-delay: 0s; }
+        .ls-orb2 { width: 150px; height: 150px; bottom: -30px; right: -20px; background: radial-gradient(circle, rgba(251,191,36,.28), rgba(251,191,36,0) 70%); animation-delay: 1.8s; }
+        .ls-orb3 { width: 110px; height: 110px; top: 65%; left: 10%; background: radial-gradient(circle, rgba(236,72,153,.3), rgba(236,72,153,0) 70%); animation-delay: 3.4s; }
+        @keyframes lsOrbFloat {
+            0%, 100% { transform: translateY(0) scale(1); opacity: .7; }
+            50% { transform: translateY(-22px) scale(1.08); opacity: 1; }
+        }
+        #lockClock {
+            margin-top: 22px; font-size: 2.2rem; font-weight: 800; letter-spacing: 1.5px;
+            font-variant-numeric: tabular-nums; text-shadow: 0 3px 14px rgba(0,0,0,.35);
+        }
+        #lockDate {
+            margin-top: 3px; font-size: .88rem; font-weight: 700; color: rgba(255,255,255,.9);
+            background: rgba(255,255,255,.14); padding: 4px 16px; border-radius: 18px;
+            border: 1px solid rgba(255,255,255,.25); display: inline-block;
+        }
         #lockScreen .logo-wrap {
             width: 132px; height: 132px; margin-bottom: 22px;
             animation: logoFloat 3.2s ease-in-out infinite;
@@ -292,6 +317,9 @@
 <body>
 
 <div id="lockScreen" role="button" aria-label="แตะหน้าจอเพื่อเข้าใช้งาน" tabindex="0">
+    <div class="ls-orb ls-orb1"></div>
+    <div class="ls-orb ls-orb2"></div>
+    <div class="ls-orb ls-orb3"></div>
     <div class="logo-wrap">
         <svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
             <defs>
@@ -321,7 +349,9 @@
     </div>
     <h1>SEACON SMART PARKING</h1>
     <p class="tagline">Car Priority · ระบบบันทึกข้อมูลรถยนต์</p>
-    <div class="tap-hint">👆 แตะหน้าจอเพื่อเข้าใช้งาน</div>
+    <div id="lockClock">00:00:00</div>
+    <div id="lockDate">กำลังโหลดวันที่...</div>
+    <div class="tap-hint" id="lockHint" style="display:none">👆 แตะหน้าจอเพื่อเข้าใช้งาน</div>
 </div>
 
 <div class="container">
@@ -398,7 +428,7 @@
                         <option value="Toyota">Toyota</option><option value="Honda">Honda</option><option value="Isuzu">Isuzu</option><option value="Mitsubishi">Mitsubishi</option><option value="Nissan">Nissan</option><option value="Mazda">Mazda</option><option value="Suzuki">Suzuki</option><option value="Subaru">Subaru</option><option value="Lexus">Lexus</option><option value="Hino">Hino</option><option value="Daihatsu">Daihatsu</option><option value="Mitsuoka">Mitsuoka</option>
                     </optgroup>
                     <optgroup label="🔋 รถไฟฟ้า & จีน (EV / China)">
-                        <option value="BYD">BYD</option><option value="MG">MG</option><option value="Tesla">Tesla</option><option value="Neta">Neta</option><option value="Deepal">Deepal</option><option value="GWM (Haval)">GWM Haval</option><option value="ORA">GWM ORA</option><option value="AION">AION</option><option value="Changan">Changan</option><option value="Zeekr">Zeekr</option><option value="Chery">Chery</option><option value="Wuling">Wuling</option><option value="Foton">Foton</option><option value="Denza">Denza</option><option value="XPeng">XPeng</option><option value="Rivian">Rivian</option><option value="Jaecoo">Jaecoo</option>
+                        <option value="BYD">BYD</option><option value="MG">MG</option><option value="Tesla">Tesla</option><option value="Neta">Neta</option><option value="Deepal">Deepal</option><option value="GWM (Haval)">GWM Haval</option><option value="ORA">GWM ORA</option><option value="AION">AION</option><option value="Changan">Changan</option><option value="Zeekr">Zeekr</option><option value="Chery">Chery</option><option value="Wuling">Wuling</option><option value="Foton">Foton</option><option value="Denza">Denza</option><option value="XPeng">XPeng</option><option value="Rivian">Rivian</option><option value="Jaecoo">Jaecoo</option><option value="Omoda">Omoda</option><option value="Avatr">Avatr</option><option value="Voyah">Voyah</option><option value="Hongqi">Hongqi</option><option value="JAC">JAC</option>
                     </optgroup>
                     <optgroup label="🇩🇪 ยุโรป (European)">
                         <option value="Mercedes-Benz">Mercedes-Benz</option><option value="BMW">BMW</option><option value="Audi">Audi</option><option value="Volkswagen">Volkswagen</option><option value="Volvo">Volvo</option><option value="Porsche">Porsche</option><option value="Mini">Mini</option><option value="Peugeot">Peugeot</option><option value="Land Rover">Land Rover</option><option value="Jaguar">Jaguar</option><option value="Fiat">Fiat</option><option value="Skoda">Skoda</option><option value="Renault">Renault</option>
@@ -413,7 +443,13 @@
                 </select>
                 <input type="text" id="inBrandOther" placeholder="ระบุยี่ห้อรถ" maxlength="50" style="display:none;margin-top:8px">
             </div>
-            <div class="input-group"><label>รุ่นรถ</label><input type="text" id="inModel" placeholder="เช่น Altis"></div>
+            <div class="input-group">
+                <label>รุ่นรถ</label>
+                <select id="inModel" disabled>
+                    <option value="">-- เลือกยี่ห้อก่อน --</option>
+                </select>
+                <input type="text" id="inModelOther" placeholder="✏️ พิมพ์รุ่นรถเอง..." style="display:none;margin-top:7px" maxlength="40">
+            </div>
             <div class="input-group">
                 <label>สี</label>
                 <select id="inColor">
@@ -522,9 +558,11 @@
     // หมายเหตุ: การซิงค์ข้อมูลพื้นหลัง (syncFromServer/polling) ยังทำงานต่อเนื่องระหว่างล็อกอยู่
     // เพื่อให้ข้อมูลอัปเดตล่าสุดพร้อมแสดงทันทีที่ปลดล็อก ไม่ต้องรอโหลดใหม่
     // ══════════════════════════════════════════════════════════════
-    const IDLE_LOCK_MS = 90000;   // ไม่มีการแตะ/ใช้งานเกิน 90 วิ (1.5 นาที) → ล็อกกลับอัตโนมัติ
+    const IDLE_LOCK_MS = 4 * 60 * 1000;   // ไม่มีการแตะ/ใช้งานเกิน 4 นาที (อยู่ในช่วง 3-5 นาทีตามมาตรฐานทั่วไป) → ล็อกกลับอัตโนมัติ
+    const AUTO_ENTER_MS = 3000;           // เปิดแอปครั้งแรก โชว์โลโก้ 3 วิ แล้ว auto-enter เอง (อยู่ในช่วง 2-4 วิ) — ไม่ต้องรอแตะหน้าจอ
     let lastActivityAt = Date.now();
-    let isLocked = true;   // เริ่มต้นแอปจะล็อกไว้ก่อนเสมอ ต้องแตะหน้าจอถึงจะเห็นข้อมูล
+    let isLocked = true;   // เริ่มต้นแอปจะล็อกไว้ก่อนเสมอ (โชว์โลโก้) แล้วจะ auto-enter เองหลัง 3 วิ หรือแตะก่อนก็ได้
+    let hasAutoEntered = false;   // auto-enter ทำครั้งเดียวตอนเปิดแอปครั้งแรกเท่านั้น — ตอน idle-lock ภายหลังต้องแตะเองเสมอ
 
     function unlockScreen() {
         if (!isLocked) return;
@@ -539,11 +577,33 @@
         isLocked = true;
         const el = document.getElementById('lockScreen');
         if (el) el.classList.remove('hidden');
+        // ตอนนี้ล็อกเพราะ idle-timeout จริง (ไม่ใช่ตอนเปิดแอปครั้งแรก) ต้องแตะเองถึงจะกลับเข้าได้
+        // จึงค่อยโชว์คำใบ้ "แตะหน้าจอ" กลับมา — ต่างจากตอนเปิดแอปครั้งแรกที่ auto-enter เอง ไม่ต้องบอกให้แตะ
+        const hint = document.getElementById('lockHint');
+        if (hint) hint.style.display = '';
     }
 
     function markActivity() {
         lastActivityAt = Date.now();
     }
+
+    // ── นาฬิกา + วันที่แบบเรียลไทม์บนหน้าโลโก้ ──
+    const LS_THAI_MONTHS = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+    const LS_THAI_DAYS = ['อาทิตย์','จันทร์','อังคาร','พุธ','พฤหัสบดี','ศุกร์','เสาร์'];
+    function tickLockClock() {
+        try {
+            const now = new Date();
+            const hh = String(now.getHours()).padStart(2, '0');
+            const mm = String(now.getMinutes()).padStart(2, '0');
+            const ss = String(now.getSeconds()).padStart(2, '0');
+            const clockEl = document.getElementById('lockClock');
+            if (clockEl) clockEl.textContent = hh + ':' + mm + ':' + ss;
+            const dateEl = document.getElementById('lockDate');
+            if (dateEl) dateEl.textContent = 'วัน' + LS_THAI_DAYS[now.getDay()] + 'ที่ ' + now.getDate() + ' ' + LS_THAI_MONTHS[now.getMonth()] + ' ' + (now.getFullYear() + 543);
+        } catch (e) { console.error('tickLockClock error:', e); }
+    }
+    tickLockClock();
+    setInterval(tickLockClock, 1000);
 
     document.addEventListener('DOMContentLoaded', function() {
         const lockEl = document.getElementById('lockScreen');
@@ -554,6 +614,15 @@
                 if (e.key === 'Enter' || e.key === ' ') unlockScreen();
             });
         }
+
+        // หมายเหตุ: คำใบ้ "แตะหน้าจอ" (#lockHint) ถูกซ่อนไว้ตั้งแต่ใน HTML (style="display:none")
+        // เพราะเปิดแอปครั้งแรกจะ auto-enter เองเสมอ ไม่ต้องบอกให้แตะ — จะโชว์กลับมาเองเฉพาะตอน
+        // idle-lock เท่านั้น ผ่านฟังก์ชัน lockScreen() ด้านบน
+
+        // auto-enter ตอนเปิดแอปครั้งแรก — ถ้าผู้ใช้ไม่แตะเองก่อน ระบบจะเข้าให้อัตโนมัติหลังโชว์โลโก้ครบเวลา
+        setTimeout(function() {
+            if (!hasAutoEntered) { hasAutoEntered = true; unlockScreen(); }
+        }, AUTO_ENTER_MS);
 
         // กิจกรรมใดๆ ในหน้า (แตะ/คลิก/เลื่อน/พิมพ์/ขยับเมาส์) ถือว่ายังใช้งานอยู่ รีเซ็ตตัวจับเวลา
         ['click', 'touchstart', 'keydown', 'scroll', 'mousemove'].forEach(function(evt) {
@@ -633,12 +702,17 @@
         if (!tbody) return;
 
         if (!records.length) {
-            tbody.innerHTML = `<tr><td colspan="11" style="text-align:center; padding:30px; color:#94a3b8;">ยังไม่มีข้อมูล — เพิ่มรายการแรกได้จากฟอร์มด้านบน</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="12" style="text-align:center; padding:30px; color:#94a3b8;">ยังไม่มีข้อมูล — เพิ่มรายการแรกได้จากฟอร์มด้านบน</td></tr>`;
             return;
         }
 
-        // เรียงล่าสุดขึ้นก่อน (ตาม updatedAt ถ้ามี ไม่งั้นตามลำดับที่ได้รับมา)
-        const sorted = [...records].sort((a, b) => (Number(b.updatedAt) || 0) - (Number(a.updatedAt) || 0));
+        // เรียงล่าสุดขึ้นก่อน (ตาม updatedAt หลัก — ถ้าเท่ากัน เช่น แถวเก่าที่ยังไม่ backfill ให้ updatedAt=0
+        // เหมือนกันหมด ใช้ id เป็น tiebreaker รอง เพื่อให้ลำดับคงที่แน่นอนทุกครั้งที่ render ไม่สลับไปมา)
+        const sorted = [...records].sort((a, b) => {
+            const diff = (Number(b.updatedAt) || 0) - (Number(a.updatedAt) || 0);
+            if (diff !== 0) return diff;
+            return String(b.id || '').localeCompare(String(a.id || ''));
+        });
 
         tbody.innerHTML = sorted.map(r => `
             <tr>
@@ -646,7 +720,7 @@
                     <button class="btn-edit" onclick="editRecord('${escAttr(r.id)}')">แก้ไข</button>
                     <button class="btn-del" onclick="deleteRecord('${escAttr(r.id)}')">ลบ</button>
                 </td>
-                <td title="${escHtml(r.type)}">${escHtml(r.type)}</td><td title="${escHtml(r.date)}">${escHtml(r.date)}</td><td title="${escHtml(r.name)}">${escHtml(r.name)}</td>
+                <td title="${escHtml(r.type)}">${escHtml(r.type)}</td><td title="${escHtml(r.date)}" style="white-space:nowrap">${escHtml(r.date) || '-'}</td><td title="${escHtml(r.name)}">${escHtml(r.name)}</td>
                 <td title="${escHtml(r.plate)}"><strong>${escHtml(r.plate)}</strong></td><td title="${escHtml(r.province)}">${escHtml(r.province)}</td>
                 <td title="${escHtml(r.brand)} ${escHtml(r.model)}">${escHtml(r.brand)} ${escHtml(r.model)}</td><td title="${escHtml(r.color)}">${escHtml(r.color)}</td><td title="${escHtml(r.level)}">${escHtml(r.level)}</td>
                 <td style="font-weight:bold; color:var(--info)">${escHtml(r.borrowTime) || '-'}</td>
@@ -671,6 +745,81 @@
     // FORM DATA
     // ────────────────────────────────────────────────────────────────
     // อ่านค่าจาก element อย่างปลอดภัย — คืนค่าว่างถ้า element หายไป (กัน TypeError ทำฟอร์มทั้งหน้าใช้งานไม่ได้)
+    // ── ฐานข้อมูลรุ่นรถตามยี่ห้อ (65 ยี่ห้อ / 441 รุ่น) — เติม dropdown รุ่นอัตโนมัติเมื่อเลือกยี่ห้อ ──
+    const MODELS_BY_BRAND = {"Toyota":["Vios","Yaris","Yaris Ativ","Corolla Altis","Corolla Cross","Camry","Fortuner","Hilux Revo","Hilux Revo Rocco","Innova","Innova Crysta","Innova Hycross","Avanza","Veloz","Rush","Sienta","Alphard","Vellfire","Prius","Prius c","C-HR","RAV4","Land Cruiser","Land Cruiser Prado","Commuter","Hiace","GR86","GR Yaris","GR Supra","Crown","Mirai","bZ4X"],"Honda":["City","City Hatchback","Civic","Civic Type R","Accord","HR-V","BR-V","CR-V","ZR-V","Jazz","Brio","Mobilio","Freed","Odyssey","Pilot","e:N1","Integra"],"Isuzu":["D-Max","D-Max Cab4","D-Max Spark","MU-X"],"Mitsubishi":["Attrage","Mirage","Xpander","Xpander Cross","Pajero Sport","Triton","Outlander","Eclipse Cross","Xforce"],"Nissan":["Almera","Note","Kicks","Kicks e-Power","Navara","Terra","X-Trail","Juke","Sylphy","Teana","Leaf","GT-R","370Z"],"Mazda":["Mazda2","Mazda3","CX-3","CX-30","CX-5","CX-8","CX-60","BT-50","MX-5"],"Suzuki":["Swift","Ciaz","Celerio","XL7","Jimny","S-Presso","Ertiga"],"Subaru":["Impreza","XV","Forester","Outback","WRX","BRZ","Legacy"],"Lexus":["ES","IS","LS","LX","GX","RX","NX","UX","LC","LM","LBX","RC"],"Hino":["300 Series","500 Series","700 Series"],"Daihatsu":["Terios","Xenia","Ayla","Sirion"],"Mitsuoka":["Galue","Viewt","Orochi","Rock Star","Le-Seyde"],"BYD":["Atto 3","Dolphin","Seal","Sealion 6","Sealion 7","M6","Han","Tang","Song Plus","Frigate"],"MG":["MG3","MG5","MG ZS","ZS EV","HS","VS Hybrid","MG4 Electric","Extender","Cyberster","EP"],"Tesla":["Model 3","Model Y","Model S","Model X","Cybertruck"],"Neta":["Neta V","Neta V-II","Neta X","Neta S","Neta GT"],"Deepal":["S07","L07","S05"],"GWM (Haval)":["Haval H6","Haval Jolion","Haval H6 HEV"],"ORA":["Good Cat","Good Cat GT","Lightning Cat"],"AION":["AION Y Plus","AION ES","AION V"],"Changan":["CS35 Plus","Uni-T","Uni-K","Nevo E07"],"Zeekr":["001","X","007"],"Chery":["Tiggo 8 Pro","Arrizo","Tiggo 7 Pro"],"Wuling":["Air EV","Cortez","Almaz","Confero","Binguo"],"Foton":["Tunland","View Transvan"],"Denza":["D9","N7","N8"],"XPeng":["G6","G9","P7","X9"],"Rivian":["R1T","R1S"],"Jaecoo":["J7","J8","J5"],"Omoda":["Omoda 5","Omoda C5","Omoda E5"],"Avatr":["Avatr 11","Avatr 12","Avatr 07"],"Voyah":["Voyah Free","Voyah Dreamer","Voyah Passion","Voyah Courage"],"Hongqi":["Hongqi E-HS9","Hongqi EHS7","Hongqi H5","Hongqi H9"],"JAC":["JAC JS4","JAC e-JS4","JAC e-S"],"Mercedes-Benz":["A-Class","C-Class","E-Class","S-Class","CLA","CLS","GLA","GLB","GLC","GLE","GLS","G-Class","AMG GT","EQA","EQB","EQC","EQE","EQS","Maybach S-Class","SL"],"BMW":["1 Series","2 Series","3 Series","4 Series","5 Series","7 Series","8 Series","X1","X2","X3","X4","X5","X6","X7","Z4","M2","M3","M4","M5","i4","iX","i7","i5"],"Audi":["A1","A3","A4","A5","A6","A7","A8","Q2","Q3","Q4 e-tron","Q5","Q7","Q8","e-tron GT","TT","R8"],"Volkswagen":["Golf","Polo","Passat","Tiguan","Touareg","T-Roc","Arteon","ID.4","ID.Buzz","Beetle"],"Volvo":["S60","S90","V60","V90","XC40","XC60","XC90","EX30","EX90","C40"],"Porsche":["911","Cayenne","Macan","Panamera","Taycan","Boxster","Cayman","718"],"Mini":["Cooper","Cooper S","Countryman","Clubman","Cabrio","Aceman","JCW"],"Peugeot":["208","2008","3008","5008","508","Traveller"],"Land Rover":["Defender","Discovery","Discovery Sport","Range Rover","Range Rover Sport","Range Rover Evoque","Range Rover Velar"],"Jaguar":["XE","XF","F-Pace","E-Pace","I-Pace","F-Type"],"Fiat":["500","500X","Panda","Tipo"],"Skoda":["Octavia","Kodiaq","Karoq","Superb","Fabia","Kamiq"],"Renault":["Clio","Captur","Megane","Koleos","Arkana","Kwid","Triber"],"Ferrari":["296","SF90","Roma","Portofino","812","F8","Purosangue"],"Lamborghini":["Huracan","Urus","Revuelto","Aventador"],"Maserati":["Ghibli","Levante","Quattroporte","GranTurismo","Grecale","MC20"],"Bentley":["Continental GT","Bentayga","Flying Spur","Mulsanne"],"Rolls-Royce":["Phantom","Ghost","Cullinan","Wraith","Spectre","Dawn"],"Aston Martin":["DB11","DB12","Vantage","DBX","DBS"],"McLaren":["720S","750S","Artura","GT","570S"],"Lotus":["Emira","Evija","Eletre","Elise","Exige"],"Bugatti":["Chiron","Veyron"],"Pagani":["Huayra","Zonda"],"Ford":["Ranger","Ranger Raptor","Everest","Focus","Fiesta","Mustang","Territory","Escape","Explorer","Bronco"],"Chevrolet":["Colorado","Trailblazer","Captiva","Spark","Aveo"],"Jeep":["Compass","Cherokee","Grand Cherokee","Wrangler","Gladiator","Renegade","Avenger"],"Hyundai":["Accent","Elantra","Tucson","Santa Fe","Creta","Staria","IONIQ 5","IONIQ 6","Palisade","Kona","H-1"],"Kia":["Soluto","Seltos","Sportage","Sorento","Carnival","EV6","EV9","Picanto","Ceed"],"SsangYong":["Rexton","Musso","Tivoli","Korando","Torres"],"Tata":["Xenon","Nexon","Safari","Tiago"],"Mahindra":["Scorpio","XUV700","Bolero","Thar"]};
+
+    // เติมตัวเลือกรุ่นรถใน dropdown ตามยี่ห้อที่เลือก
+    function populateModelOptions(brand) {
+        const sel = document.getElementById('inModel');
+        const other = document.getElementById('inModelOther');
+        if (!sel) return;
+        const models = MODELS_BY_BRAND[brand] || [];
+
+        sel.innerHTML = '';
+        if (!brand) {
+            sel.innerHTML = '<option value="">-- เลือกยี่ห้อก่อน --</option>';
+            sel.disabled = true;
+            if (other) { other.style.display = 'none'; other.value = ''; }
+            return;
+        }
+
+        sel.disabled = false;
+        if (models.length === 0) {
+            sel.innerHTML = '<option value="อื่นๆ">-- ไม่มีข้อมูลรุ่น พิมพ์เอง --</option>';
+            sel.disabled = true;
+            if (other) { other.style.display = 'block'; }
+            return;
+        }
+
+        let html = '<option value="">-- เลือกรุ่น --</option>';
+        for (const m of models) {
+            html += '<option value="' + escAttr(m) + '">' + escAttr(m) + '</option>';
+        }
+        html += '<option value="อื่นๆ">อื่นๆ (พิมพ์เอง)</option>';
+        sel.innerHTML = html;
+        if (other) { other.style.display = 'none'; other.value = ''; }
+    }
+
+    // ── "อื่นๆ (พิมพ์เอง)" ──
+    function resolveOther(selectId, otherId) {
+        const sel = document.getElementById(selectId);
+        const v = sel ? String(sel.value || '').trim() : '';
+        if (v === 'อื่นๆ') {
+            const other = document.getElementById(otherId);
+            const custom = other ? String(other.value || '').trim() : '';
+            return custom || 'อื่นๆ';
+        }
+        return v;
+    }
+
+    function toggleOtherInput(selectId, otherId) {
+        const sel = document.getElementById(selectId);
+        const other = document.getElementById(otherId);
+        if (!sel || !other) return;
+        const show = sel.value === 'อื่นๆ';
+        other.style.display = show ? 'block' : 'none';
+        if (show) other.focus();
+        else other.value = '';
+    }
+
+    function setSelectOrOther(selectId, otherId, val) {
+        const sel = document.getElementById(selectId);
+        const other = document.getElementById(otherId);
+        if (!sel) return;
+        const v = String(val || '').trim();
+        const found = Array.from(sel.options).some(o => o.value === v);
+        if (found) {
+            sel.value = v;
+            if (other) { other.style.display = 'none'; other.value = ''; }
+        } else if (v) {
+            sel.value = 'อื่นๆ';
+            if (other) { other.style.display = 'block'; other.value = v; }
+        } else {
+            sel.value = '';
+            if (other) { other.style.display = 'none'; other.value = ''; }
+        }
+    }
+
     function getVal(id) {
         const el = document.getElementById(id);
         return el ? String(el.value || '').trim() : '';
@@ -691,7 +840,7 @@
             plate: getVal('inPlate').replace(/\s+/g, ''),   // ทะเบียนรถตัดช่องว่างทั้งหมด กันเว้นวรรค/แท็บปนมา
             province: getVal('inLp'),
             brand: brandFinal,
-            model: getVal('inModel'),
+            model: resolveOther('inModel', 'inModelOther'),
             color: getVal('inColor'),
             level: getVal('inLevel'),
             returnTime: getVal('inReturn'),
@@ -810,7 +959,10 @@
                 other.style.display = 'none';
                 other.value = '';
             }
+            populateModelOptions(sel.value);   // เปลี่ยนยี่ห้อ → เติมรุ่นที่มีให้เลือกใหม่ทุกครั้ง
         });
+        const modelSel = document.getElementById('inModel');
+        if (modelSel) modelSel.addEventListener('change', () => toggleOtherInput('inModel', 'inModelOther'));
     });
 
     function editRecord(id) {
@@ -828,7 +980,8 @@
         setVal('inPlate', r.plate);
         setVal('inLp', r.province);
         setBrandVal(r.brand);
-        setVal('inModel', r.model);
+        populateModelOptions(getVal('inBrand'));   // เติมรุ่นตามยี่ห้อก่อน แล้วค่อยตั้งค่ารุ่นเดิม
+        setSelectOrOther('inModel', 'inModelOther', r.model);
         setVal('inColor', r.color);
         setVal('inLevel', r.level);
         setVal('inReturn', r.returnTime);
@@ -1119,6 +1272,9 @@
         document.querySelectorAll('#formContent textarea').forEach(function(t) { t.value = ''; });
         const brandOther = document.getElementById('inBrandOther');
         if (brandOther) brandOther.style.display = 'none';   // ซ่อนช่องกรอกยี่ห้อเองกลับตามค่าเริ่มต้นด้วยทุกครั้งที่ล้างฟอร์ม
+        const modelOther = document.getElementById('inModelOther');
+        if (modelOther) { modelOther.style.display = 'none'; modelOther.value = ''; }
+        populateModelOptions('');   // เคลียร์ dropdown รุ่นกลับเป็น "-- เลือกยี่ห้อก่อน --"
         setVal('editId', '');
         fillCurrentDateTime();   // เติมวัน-เวลายืมปัจจุบันให้ใหม่ทุกครั้งที่ล้างฟอร์ม
     }
